@@ -1,13 +1,15 @@
 import React, { useRef, useState } from 'react'
 import Header from './Header'
 import { checkValidData } from '../utils/Validations';
+import {createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from '../utils/firebase';
 
 
 
 
 const Login = () => {
     const [isSignInForm, setIsSignInForm] = useState(true);
-    const [errorMessage,setErrorMessage] = useState(null);
+    const [errorMessage,setErrorMessage] = useState("");
 
     const name = useRef(null);
     const email = useRef(null);
@@ -15,9 +17,41 @@ const Login = () => {
 
 
     const handleButtonClick = () => {
-        const message = checkValidData(email.current.value, password.current.value);
+        const message = checkValidData(email.current.value, password.current.value ) //name.current.value);
         setErrorMessage(message);
         if (message) return;
+
+        if(!isSignInForm)
+        {
+            //SignUp Logic
+            createUserWithEmailAndPassword(auth,email.current.value, password.current.value)
+            .then((userCredential) => {
+                // Signed up 
+                const user = userCredential.user;
+
+            })
+            .catch((error) => {
+                const errorCode = error.code;
+                const errorMessage = error.message;
+                setErrorMessage(errorCode+" "+errorMessage);
+            });
+
+
+        }
+        else {
+            //SignIn Logic
+            signInWithEmailAndPassword(auth,email.current.value, password.current.value)
+            .then((userCredential) => {
+                // Signed in 
+                const user = userCredential.user;
+                
+            })
+            .catch((error) => {
+                const errorCode = error.code;
+                const errorMessage = error.message;
+                setErrorMessage(errorCode+" "+errorMessage);
+            });
+        }
 
 
     }
@@ -55,7 +89,7 @@ const Login = () => {
         )}
             <input type='text' ref = {email} placeholder='Email Address' className="p-4 my-4 w-full bg-gray-700 opacity-80"/>
             <input type='password' ref = {password} placeholder='Password' className="p-4 my-4 w-full bg-gray-700 opacity-80"/>
-            <p className='text-red-600'>{errorMessage + " !!"}</p>
+            <p className='text-red-600'>{errorMessage}</p>
             <button onClick={handleButtonClick} className="p-2 my-6 bg-red-600 w-full rounded-lg">{isSignInForm ?"Sign In":"Sign Up"} </button>
             <p className='py-4 hover:cursor-pointer' onClick={toggleSignInForm}>{isSignInForm ? "New to Netflix? Sign Up Now" : "Already registered? Sign In Now"}</p>
         </form>
