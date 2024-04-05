@@ -1,15 +1,19 @@
 import React, { useRef, useState } from 'react'
 import Header from './Header'
 import { checkValidData } from '../utils/Validations';
-import {createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import {createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from '../utils/firebase';
+import { useDispatch } from 'react-redux';
+import { addUser } from '../utils/userSlice';
 
 
 
 
 const Login = () => {
+    
     const [isSignInForm, setIsSignInForm] = useState(true);
     const [errorMessage,setErrorMessage] = useState("");
+    const dispatch = useDispatch();
 
     const name = useRef(null);
     const email = useRef(null);
@@ -21,44 +25,57 @@ const Login = () => {
         setErrorMessage(message);
         if (message) return;
 
-        if(!isSignInForm)
-        {
-            //SignUp Logic
-            createUserWithEmailAndPassword(auth,email.current.value, password.current.value)
-            .then((userCredential) => {
-                // Signed up 
+        if (!isSignInForm) {
+            // Sign Up Logic
+            createUserWithEmailAndPassword(
+              auth,
+              email.current.value,
+              password.current.value
+            )
+              .then((userCredential) => {
                 const user = userCredential.user;
+                updateProfile(user, {
+                  displayName: name.current.value,
+                })
+                  .then(() => {
+                    const { uid, email, displayName } = auth.currentUser;
+                    dispatch(
+                      addUser({
+                        uid: uid,
+                        email: email,
+                        displayName: displayName,
 
-            })
-            .catch((error) => {
+                      })
+                    );
+                  }
+                  )
+                  .catch((error) => {
+                    setErrorMessage(error.message);
+                  });
+              })
+              .catch((error) => {
                 const errorCode = error.code;
                 const errorMessage = error.message;
-                setErrorMessage(errorCode+" "+errorMessage);
-            });
-
-
-        }
-        else {
-            //SignIn Logic
-            signInWithEmailAndPassword(auth,email.current.value, password.current.value)
-            .then((userCredential) => {
-                // Signed in 
-                const user = userCredential.user;
-                
-            })
-            .catch((error) => {
+                setErrorMessage(errorCode + "-" + errorMessage);
+              });
+          } else {
+            // Sign In Logic
+            signInWithEmailAndPassword(
+              auth,
+              email.current.value,
+              password.current.value
+            )
+              
+              
+              .catch((error) => {
                 const errorCode = error.code;
                 const errorMessage = error.message;
-                setErrorMessage(errorCode+" "+errorMessage);
-            });
-        }
+                setErrorMessage(errorCode + "-" + errorMessage);
+              });
 
-
-    }
-
-
-
-
+                     
+            }
+        };
 
     const toggleSignInForm = () => {
         setIsSignInForm(!isSignInForm);
