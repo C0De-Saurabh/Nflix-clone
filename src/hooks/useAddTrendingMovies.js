@@ -9,7 +9,6 @@ const useAddTrendingMovies = () =>{
     const getTrendingMovies = async() => {
         const resposne = await fetch('https://api.themoviedb.org/3/movie/popular?page=2',API_OPTIONS);
         const json = await resposne.json();
-        console.log(json.results);
         dispatch(addTrendingMovies(json.results));
     }
 
